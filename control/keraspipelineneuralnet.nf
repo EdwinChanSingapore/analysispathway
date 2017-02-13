@@ -1,13 +1,13 @@
 #!/usr/bin/env nextflow
 
 home = '/data/backup/metacaller/stage'
-project ='NA_version_1.0'
-projectout ='NA_version_1.0_1.0'
+project ='mason_cut1.0'
+projectout ='mason1.0'
 inpath ="$home/data/$project"
 inputpath="$inpath"
 outpath ="$home/output/$projectout"
 outputpath="$outpath"
-referencepath="/data/reference/human/ucsc.hg19.GATK-sorted/ucsc.hg19.fa"
+referencepath="/data/reference/human/GRCh37p5/fasta/hs37d5.fa"
 
 process movefiles {
 
@@ -19,8 +19,8 @@ file signal into startlearning0,startlearning1,startlearning2,startlearning3,sta
 script:
 """
 #mkdir -p $outputpath/
-cat $inputpath/pindel.vcf.normalisedtrain.vcf | grep -v "<[A-Z]" > $inputpath/pindel.vcf
-mv -f $inputpath/pindel.vcf $inputpath/pindel.vcf.normalisedtrain.vcf
+#cat $inputpath/pindel.vcf.normalisedtrain.vcf | grep -v "<[A-Z]" > $inputpath/pindel.vcf
+#mv -f $inputpath/pindel.vcf $inputpath/pindel.vcf.normalisedtrain.vcf
 ##cat $inputpath/fb.vcf.normalisedtrain.vcf | \${VCFFILTERPATH} -f "QUAL > 5" > $inputpath/fb.vcf
 #mv -f $inputpath/fb.vcf $inputpath/fb.vcf.normalisedtrain.vcf
 echo "done moving files" > signal
@@ -35,12 +35,12 @@ output:
 
 script:
 """
-mkdir -p $outputpath/ANN/
-chmod 777 $outputpath/ANN/
-rm -f $outputpath/ANN/model*
+#mkdir -p $outputpath/ANN/
+#chmod 777 $outputpath/ANN/
+#rm -f $outputpath/ANN/model*
 \${ANNPATH} \${TRUEANNPATH} $inputpath $referencepath $outputpath
-cp -f ${GENERATEANNPATH} $outputpath/ANN/
-\${CALPATH} $outputpath/ANN/ANNgenerateresults.py $outputpath/ANN/myXdata.txt.npy $outputpath/ANN/myydata.txt.npy $outputpath/ANN/ $outputpath/ANN/samplelist.p $outputpath/ANN/truthdict.p $outputpath/ANN/callerlengths.txt.npy $outputpath/ANN/vcf_dictionary.txt
+#cp -f ${GENERATEANNPATH} $outputpath/ANN/
+#\${CALPATH} $outputpath/ANN/ANNgenerateresults.py $outputpath/ANN/myXdata.txt.npy $outputpath/ANN/myydata.txt.npy $outputpath/ANN/ $outputpath/ANN/samplelist.p $outputpath/ANN/truthdict.p $outputpath/ANN/callerlengths.txt.npy $outputpath/ANN/vcf_dictionary.txt
 """
 
 }
