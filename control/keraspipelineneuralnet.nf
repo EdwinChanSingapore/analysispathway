@@ -8,6 +8,7 @@ inputpath="$inpath"
 outpath ="$home/output/$projectout"
 outputpath="$outpath"
 referencepath="/data/reference/human/GRCh37p5/fasta/hs37d5.fa"
+ucscreferencepath="/data/reference/human/ucsc.hg19.GATK-sorted/ucsc.hg19.fa"
 
 process movefiles {
 
@@ -40,7 +41,7 @@ script:
 #rm -f $outputpath/ANN/model*
 \${ANNPATH} \${TRUEANNPATH} $inputpath $referencepath $outputpath
 #cp -f ${GENERATEANNPATH} $outputpath/ANN/
-#\${CALPATH} $outputpath/ANN/ANNgenerateresults.py $outputpath/ANN/myXdata.txt.npy $outputpath/ANN/myydata.txt.npy $outputpath/ANN/ $outputpath/ANN/samplelist.p $outputpath/ANN/truthdict.p $outputpath/ANN/callerlengths.txt.npy $outputpath/ANN/vcf_dictionary.txt
+#\${CALPATH} $outputpath/ANN/ANNgenerateresults.py $outputpath/ANN/myXdata.txt.npy $outputpath/ANN/myydata.txt.npy $outputpath/ANN/ $outputpath/ANN/samplelist.p $outputpath/ANN/truthdict.p $outputpath/ANN/callerlengths.txt.npy $outputpath/ANN/vcf_list.txt
 """
 
 }

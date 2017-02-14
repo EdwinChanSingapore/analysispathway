@@ -5,8 +5,7 @@
       <paths name="bchdb">
         <serverdata>
           <mappings>
-            <mapping deploy="/data/backup/metacaller/stage/analysis/version1.0/" local="$PROJECT_DIR$" web="/" />
-            <mapping local="" />
+            <mapping deploy="/data/backup/metacaller/stage/analysis/na_version_1.0_anal" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

@@ -13,6 +13,10 @@ from keras.optimizers import RMSprop
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
 
+STEP_INCREMENT = 10
+
+RECURSION_LIMIT = 0.0002
+
 VERBOSE = 1
 
 vcf_file_name = "/ANN/truevcf.vcf"
@@ -45,12 +49,11 @@ original_vcf_reader = "/data/backup/metacaller/stage/data/version6.3a/hc.vcf.nor
 # no other file should be present in the folder
 def main_gather_input_execute_prep_output(array_sizes, dict_of_truth_input, fullmatrix_sample, fullmatrix_truth,
                                           list_of_samples_input, save_location, vcf_dictionary):
-    calculated_prediction_actual, calculated_truth_actual = train_neural_net(20, 50, fullmatrix_sample,
+    calculated_prediction_actual, calculated_truth_actual = train_neural_net(20, 10, fullmatrix_sample,
                                                                              fullmatrix_truth,
                                                                              save_location, array_sizes)
     get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
                             list_of_samples_input, vcf_dictionary, save_location)
-
 
 def produce_vcf_file(calculated_prediction_actual, list_of_samples_input, vcf_dictionary, outputpath):
     list_of_records = []
@@ -64,61 +67,48 @@ def produce_vcf_file(calculated_prediction_actual, list_of_samples_input, vcf_di
 
 
 def get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                            list_of_samples_input, vcf_dictionary, outputhpath):
+                            list_of_samples_input, vcf_list, outputpath):
     print "Here are some predictions", calculated_prediction_actual[:100]
     print "here are some truths", calculated_prediction_actual[:100]
     f1_score_left = get_scores(calculated_prediction_actual, calculated_truth_actual, 0.0,
                                list_of_samples_input,
-                               dict_of_truth_input, 1)
-    f1_score_right = get_scores(calculated_prediction_actual, calculated_truth_actual, 1.0,
-                                list_of_samples_input,
-                                dict_of_truth_input, 1)
-    guess_f1_left = recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                                            list_of_samples_input, 0.0, 1.0, f1_score_left, f1_score_right)
-    get_scores(calculated_prediction_actual, calculated_truth_actual, guess_f1_left, list_of_samples_input,
+                               dict_of_truth_input)
+    guess_f1_final_score, guess_f1_final = recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
+                                            list_of_samples_input, 0.0, f1_score_left, 0.2)
+    get_scores(calculated_prediction_actual, calculated_truth_actual, guess_f1_final, list_of_samples_input,
                dict_of_truth_input, VERBOSE)
+    promise_vcf_file(calculated_prediction_actual, guess_f1_final, list_of_samples_input, vcf_list, outputpath)
+
+
+def promise_vcf_file(calculated_prediction_actual, guess_f1_final, list_of_samples_input, vcf_list, outputpath):
     prediction = []
     for item in calculated_prediction_actual:
-        if item > guess_f1_left:
+        if item > guess_f1_final:
             prediction.append(1)
         else:
             prediction.append(0)
-    produce_vcf_file(prediction, list_of_samples_input, vcf_dictionary, outputhpath)
+    list_of_records = []
+    for i in range(len(list_of_samples_input)):
+        if prediction[i] == 1:
+            list_of_records.append(vcf_list[i])
+    vcf_reader = vcf.Reader(filename=original_vcf_reader)
+    vcf_writer = vcf.Writer(open(outputpath + vcf_file_name, 'w'), vcf_reader)
+    for record in list_of_records:
+        vcf_writer.write_record(record)
 
 
 def recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                            list_of_samples_input, left_guess, right_guess, left_guess_score, right_guess_score):
-    if abs(left_guess - right_guess) < 0.0001:
-        return left_guess_score, left_guess
-    guess_f1_third = ((right_guess - left_guess) / 2) + left_guess
-    f1_score_curr = get_scores(calculated_prediction_actual, calculated_truth_actual, guess_f1_third,
-                               list_of_samples_input,
-                               dict_of_truth_input,1)
-    improvement_first = f1_score_curr - left_guess_score
-    improvement_second = f1_score_curr - right_guess_score
-    if improvement_first > 0 and improvement_second > 0:
-        left_score, left_bound = recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual,
-                                                         dict_of_truth_input,
-                                                         list_of_samples_input, left_guess, guess_f1_third,
-                                                         left_guess_score, f1_score_curr)
-        right_score, right_bound = recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual,
-                                                           dict_of_truth_input,
-                                                           list_of_samples_input, guess_f1_third, right_guess,
-                                                           f1_score_curr,
-                                                           right_guess_score)
-        if left_score > right_score:
-            return left_score, left_bound
-        else:
-            return right_score, right_bound
-    elif improvement_first > 0:
+                            list_of_samples_input, guess, guess_score, step):
+    if step <= RECURSION_LIMIT:
+        return guess_score, guess
+    new_guess = guess + step
+    new_guess_score = get_scores(calculated_prediction_actual, calculated_truth_actual, new_guess,
+                               list_of_samples_input, dict_of_truth_input)
+    if new_guess_score > guess_score :
         return recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                                       list_of_samples_input, left_guess, guess_f1_third, left_guess_score,
-                                       f1_score_curr)
-    elif improvement_second > 0:
-        return recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                                       list_of_samples_input, guess_f1_third, right_guess, f1_score_curr,
-                                       right_guess_score)
-    return -1, -1
+                                       list_of_samples_input, new_guess, new_guess_score, step)
+    return recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
+                                   list_of_samples_input, guess, guess_score, step / STEP_INCREMENT)
 
 
 def load_references(input_paths):
@@ -328,6 +318,8 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
 
 def do_smote_resampling(myX_train, myy_train):
     sm = SMOTE(kind='regular')
+    where_are_NaNs = np.isnan(myX_train)
+    myX_train[where_are_NaNs] = 0
     X_resampled, y_resampled = sm.fit_sample(myX_train, myy_train)
     return X_resampled, y_resampled
 
@@ -343,8 +335,6 @@ def save_model_details(final_model, save_model_probabilities, trutharray, locati
 
 def develop_first_layer_matrixes(neural_net_branch, branch_size):
     neural_net_branch.add(BatchNormalization(input_shape=(branch_size,), axis=1))
-    neural_net_branch.add(Dense(24, activation='linear'))
-    neural_net_branch.add(LeakyReLU(alpha=0.05))
     neural_net_branch.add(Dense(24, activation='linear'))
     neural_net_branch.add(LeakyReLU(alpha=0.05))
     neural_net_branch.add(Dense(24, activation='linear'))

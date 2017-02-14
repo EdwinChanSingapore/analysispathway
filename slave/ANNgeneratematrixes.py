@@ -15,9 +15,14 @@ from methods import *
 # The path should contain n caller vcf files and 1 truth file
 # vcf files should be labelled with vcf and truth file should be labelled with truth
 # no other file should be present in the folder
-scores_name = '/ANN/scores.txt'
-y_data_name = '/ANN/myydata.txt'
-x_data_name = '/ANN/myXdata.txt'
+
+LIST_OF_INPUTS_NAME = '/ANN/samplelist.p'
+TRUTH_DICTIONARY_NAME = '/ANN/truthdict.p'
+CALLER_LENGTH_FILE_NAME = '/ANN/callerlengths.txt'
+VCF_LIST_FILE_NAME = '/ANN/vcf_list.p'
+SCORES_NAME = '/ANN/scores.txt'
+Y_DATA_NAME = '/ANN/myydata.txt'
+X_DATA_NAME = '/ANN/myXdata.txt'
 negative_sample_ratio = 1
 positive_sample_ratio = 2
 sample_limit = 10000
@@ -32,9 +37,10 @@ def load_and_save_data(user_input):
     input_samples, referencepath, output_location = load_references(user_input)
     my_x_dataset, my_y_dataset, list_of_samples, truth_dictionary, length_of_caller_outputs, \
     vcf_record_list = main_analyse_samples_and_truth(input_samples, referencepath)
-    save_files(output_location, my_x_dataset, my_y_dataset)
+    save_files(output_location, my_x_dataset, length_of_caller_outputs,
+               list_of_samples, truth_dictionary, vcf_record_list, my_y_dataset)
     orig_stdout = sys.stdout
-    f = file(str(output_location) + scores_name, 'w')
+    f = file(str(output_location) + SCORES_NAME, 'w')
     sys.stdout = f
     main_gather_input_execute_prep_output(length_of_caller_outputs, truth_dictionary, my_x_dataset, my_y_dataset,
                                           list_of_samples, output_location, vcf_record_list)
@@ -157,7 +163,7 @@ def get_reference_dictionary_for_entropy(reference_path):
 
 
 def ignore_file(vcf_file):
-    if "train" not in vcf_file or "breakseq" in vcf_file:
+    if "vcf" not in vcf_file or "truth" in vcf_file or "breakseq" in vcf_file:
         return True
     return False
 
@@ -167,7 +173,7 @@ def create_dictionary_keys(vcf_reader, sample_dictionary):
         if "GL" in str(record.CHROM):
             continue
         sample_name = get_sample_name_from_record(record)
-        sample_dictionary[sample_name] = [[],[]]  # fullname has become a key in fulldictionary
+        sample_dictionary[sample_name] = [[], []]  # fullname has become a key in fulldictionary
     return sample_dictionary
 
 
@@ -224,13 +230,26 @@ def load_references(user_input):
     return file1, referencepath, output_location
 
 
-def save_files(output_location, my_x_samples_array, my_y_sample_array=[]):
+def save_files(output_location, x_array, length_of_caller_outputs, sample_list, truth_dict, vcf_dictionary_file,
+               y_array=[]):
     file2 = output_location
-    x_data = str(file2) + str(x_data_name)
-    np.save(x_data, my_x_samples_array)
-    if my_y_sample_array != []:
-        y_data = str(file2) + str(y_data_name)
-        np.save(y_data, my_y_sample_array)
+    x_data_file_name = str(file2) + str(X_DATA_NAME)
+    np.save(x_data_file_name, x_array)
+    vcf_file_name = str(file2) + str(VCF_LIST_FILE_NAME)
+    caller_length_file_name = str(file2) + str(CALLER_LENGTH_FILE_NAME)
+    truth_dictionary_name = str(file2) + str(TRUTH_DICTIONARY_NAME)
+    list_of_inputs_name = str(file2) + str(LIST_OF_INPUTS_NAME)
+    np.save(caller_length_file_name, length_of_caller_outputs)
+    with open(list_of_inputs_name, 'wb') as samplesave1:
+        pickle.dump(sample_list, samplesave1)
+    with open(truth_dictionary_name, 'wb') as samplesave2:
+        pickle.dump(truth_dict, samplesave2)
+    with open(vcf_file_name, 'wb') as samplesave3:
+        pickle.dump(vcf_dictionary_file, samplesave3)
+
+    if y_array != []:
+        y_data_file_name = str(file2) + str(Y_DATA_NAME)
+        np.save(y_data_file_name, y_array)
 
 
 def check_predicted_with_truth(passed_list_of_samples, dictionary_of_truth=[]):
@@ -245,7 +264,7 @@ def check_predicted_with_truth(passed_list_of_samples, dictionary_of_truth=[]):
         final_array_of_samples.append(temp_array)
     if dictionary_of_truth:
         return final_truth_list, final_array_of_samples
-    return final_truth_list
+    return final_array_of_samples
 
 
 def add_mode_values_into_list_of_samples(full_dictionary, mode_value):
