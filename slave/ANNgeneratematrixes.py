@@ -23,6 +23,7 @@ VCF_LIST_FILE_NAME = '/ANN/vcf_list.p'
 SCORES_NAME = '/ANN/scores.txt'
 Y_DATA_NAME = '/ANN/myydata.txt'
 X_DATA_NAME = '/ANN/myXdata.txt'
+NUMBER_OF_CALLERS = 5
 negative_sample_ratio = 1
 positive_sample_ratio = 2
 sample_limit = 10000
@@ -75,12 +76,6 @@ def generate_input(path, referencepath):
 
 # This method goes through all the training variant calling files and extracts unique calls into a sample dictionary
 
-def create_vcf_dictionary(vcf_reader, vcf_dictionary):
-    for record in vcf_reader:
-        sample_name = get_sample_name_from_record(record)
-        vcf_dictionary[sample_name] = record  # fullname has become a key in fulldictionary
-    return vcf_dictionary
-
 
 def get_dictionary_keys(path):
     sample_dictionary = {}
@@ -97,13 +92,31 @@ def get_dictionary_keys(path):
 # that same caller would have provided.
 # Each caller has a different amount of variables because it contains different datasets
 
+def create_list_of_paths(path):
+    list_of_paths = [0] * NUMBER_OF_CALLERS
+    for vcf_file in os.listdir(path):
+        if ignore_file(vcf_file):
+            continue
+        if "fb" in vcf_file:
+            list_of_paths[0] = vcf_file
+        if "hc" in vcf_file:
+            list_of_paths[1] = vcf_file
+        if "ug" in vcf_file:
+            list_of_paths[2] = vcf_file
+        if "pind" in vcf_file:
+            list_of_paths[3] = vcf_file
+        if "st" in vcf_file:
+            list_of_paths[4] = vcf_file
+    return list_of_paths
+
+
+
 def fill_sample_dictionary(base_entropy, sample_dictionary, path, reference_dictionary):
     callerlengths = [0] * number_of_callers
     index = 0
     total_mode_value = 0
-    for vcf_file in os.listdir(path):
-        if ignore_file(vcf_file):
-            continue
+    list_of_paths = create_list_of_paths(path)
+    for vcf_file in list_of_paths:
         index += 1
         opened_vcf_file = vcf.Reader(open(vcf_file, 'r'))
         removaldict = iterate_over_file_to_extract_data(base_entropy, sample_dictionary,
@@ -260,7 +273,7 @@ def check_predicted_with_truth(passed_list_of_samples, dictionary_of_truth=[]):
             check_sample_against_truth_dictionary(item[0], final_truth_list, dictionary_of_truth)
         temp_array = []
         for row in item[1]:
-            temp_array.extend(row)
+            temp_array.append(row)
         final_array_of_samples.append(temp_array)
     if dictionary_of_truth:
         return final_truth_list, final_array_of_samples

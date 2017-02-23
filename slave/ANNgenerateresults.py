@@ -353,7 +353,7 @@ def get_sizes(array_sizes):
     ug_size = array_sizes[2]
     pindel_size = array_sizes[3]
     st_size = array_sizes[4]
-    return fb_size, hc_size, pindel_size, st_size, ug_size
+    return fb_size, hc_size, ug_size, pindel_size, st_size
 
 
 def prep_input_samples(array_sizes, x_training_data):
@@ -368,7 +368,7 @@ def prep_input_samples(array_sizes, x_training_data):
     count += array_sizes[3]
     X_st = np.array(map(lambda x: x[count:count + array_sizes[4]], x_training_data))
     count += array_sizes[4]
-    return X_fb, X_hc, X_pindel, X_st, X_ug
+    return X_fb, X_hc, X_ug, X_pindel, X_st
 
 
 if __name__ == "__main__":
