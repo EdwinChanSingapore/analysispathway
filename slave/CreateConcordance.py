@@ -37,6 +37,10 @@ def load_and_save_data(user_input):
 
 def main_analyse_samples_and_truth(inputpaths, concordnumber, output):
     os.chdir(inputpaths)
+    name3 = output + "/concordance/" + concordnumber + "/finalscores.txt"
+    orig_stdout = sys.stdout
+    f = file(name3 + '.txt', 'w')
+    sys.stdout = f
     truthdict = generate_truth_list(inputpaths)
     full_dictionary, vcf_dictionary = get_dictionary_keys(inputpaths)
     full_dictionary = fill_sample_dictionary(full_dictionary, inputpaths)
@@ -51,10 +55,6 @@ def main_analyse_samples_and_truth(inputpaths, concordnumber, output):
 
 def calculate_results(scikittestlist, finaltruthlist, concordnumber, output_location):
     false_positive_final, true_negative_final = perf_measure(finaltruthlist, scikittestlist)
-    name3 = output_location + "/concordance/" + concordnumber + "/finalscores.txt"
-    orig_stdout = sys.stdout
-    f = file(name3 + '.txt', 'w')
-    sys.stdout = f
     print "final false positive is :", false_positive_final
     print "final true negative is :", true_negative_final
     print "final precision score is :", precision_score(finaltruthlist, scikittestlist)
@@ -85,6 +85,8 @@ def get_dictionary_keys(path):
 
 def create_vcf_dictionary(vcf_reader, vcf_dictionary):
     for record in vcf_reader:
+        if "GL" in record.CHROM:
+            continue
         sample_name = get_sample_name_from_record(record)
         vcf_dictionary[sample_name] = record  # fullname has become a key in fulldictionary
     return vcf_dictionary
@@ -166,6 +168,8 @@ def generate_truth_list(path):
             continue
         vcf_reader = vcf.Reader(open(truth_file, 'r'))
         for record in vcf_reader:
+            if "GL" in record.CHROM:
+                continue
             templist = []
             for item in record.ALT:
                 templist.append(str(item).upper())
@@ -180,10 +184,10 @@ def check_sample_against_truth_dictionary(tuple_name, final_sample_list, final_t
             if alternate in truth_dictionary[temp_tuple]:
                 final_sample_list.append(1)
                 final_truth_list.append(1)
-                return 1
+                return
     final_sample_list.append(1)
     final_truth_list.append(0)
-    return 0
+    return
 
 
 def load_references(input_paths):
@@ -210,10 +214,9 @@ def check_predicted_with_truth(passed_list_of_samples, dictionary_of_truth, vcf_
     final_truth_list = []
     vcf_records_object = []
     for item in passed_list_of_samples:
-        result = check_sample_against_truth_dictionary(item[0], final_array_of_samples, final_truth_list,
+        check_sample_against_truth_dictionary(item[0], final_array_of_samples, final_truth_list,
                                                        dictionary_of_truth)
-        if result:
-            vcf_records_object.append(vcf_dictionary[item[0]])
+        vcf_records_object.append(vcf_dictionary[item[0]])
     return final_array_of_samples, final_truth_list, vcf_records_object
 
 

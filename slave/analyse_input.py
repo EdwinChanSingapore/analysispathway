@@ -13,7 +13,7 @@ def main(paths):
 def predone_train_neural_net(length_of_caller_outputs, my_x_dataset, model):
     X_1, X_2, X_3, X_4, X_5 = prep_input_samples(length_of_caller_outputs, my_x_dataset)
     final_predictions = model.predict([X_1, X_2, X_3, X_4, X_5])
-
+    return final_predictions
 
 # INPUT MUST BE A DIRECTORY!
 
@@ -23,17 +23,18 @@ def generate_matrixes(input, model, reference, outputpath):
     calculated_prediction_actual = predone_train_neural_net(length_of_caller_outputs, my_x_dataset, model)
     list_of_records = create_list_of_records(calculated_prediction_actual, vcf_list)
     vcf_reader = vcf.Reader(filename=original_vcf_reader)
-    vcf_writer = vcf.Writer(open(outputpath + "truevcf.vcf", 'w'), vcf_reader)
+    vcf_writer = vcf.Writer(open(outputpath + "/truevcf.vcf", 'w'), vcf_reader)
     for record in list_of_records:
         vcf_writer.write_record(record)
 
 
 def create_list_of_records(calculated_prediction_actual, vcf_dictionary):
     list_of_records = []
-    for i in range(len(list_of_samples_input)):
+    if len(calculated_prediction_actual) != len(vcf_dictionary) :
+        raise Exception("vcf list should be same length as calculated predictions")
+    for i in range(len(calculated_prediction_actual)):
         if calculated_prediction_actual[i] == 1:
-            item = list_of_samples_input[i]
-            list_of_records.append(vcf_dictionary[item[0]])
+            list_of_records.append(vcf_dictionary[i])
     return list_of_records
 
 
@@ -41,6 +42,7 @@ def load_references(paths):
     input = paths['input']
     os.chdir(paths['model'])
     model = load_model(paths['name'])
+    os.chdir(paths['input'])
     reference = paths['reference']
     output = paths['output']
     return input, model, reference, output

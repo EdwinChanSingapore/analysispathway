@@ -66,10 +66,22 @@ def produce_vcf_file(calculated_prediction_actual, list_of_samples_input, vcf_di
         vcf_writer.write_record(record)
 
 
+def remove_false_negative(calculated_prediction_actual, calculated_truth_actual, list_of_samples_input):
+    removal_list_index = []
+    for i in range(len(calculated_prediction_actual)):
+        if calculated_prediction_actual[i] == 0 and calculated_truth_actual[i] == 1:
+            removal_list_index.insert(0,i)
+    for index in removal_list_index :
+        calculated_prediction_actual.pop(index)
+        calculated_truth_actual.pop(index)
+        list_of_samples_input.pop(index)
+
+
 def get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
                             list_of_samples_input, vcf_list, outputpath):
     print "Here are some predictions", calculated_prediction_actual[:100]
     print "here are some truths", calculated_prediction_actual[:100]
+    remove_false_negative(calculated_prediction_actual, calculated_truth_actual, list_of_samples_input)
     f1_score_left = get_scores(calculated_prediction_actual, calculated_truth_actual, 0.0,
                                list_of_samples_input,
                                dict_of_truth_input)

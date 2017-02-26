@@ -218,6 +218,8 @@ def generate_truth_list(path):
             continue
         vcf_reader = vcf.Reader(open(truth_file, 'r'))
         for record in vcf_reader:
+            if "GL" in record.CHROM:
+                continue
             templist = []
             for item in record.ALT:
                 templist.append(str(item).upper())
@@ -273,7 +275,7 @@ def check_predicted_with_truth(passed_list_of_samples, dictionary_of_truth=[]):
             check_sample_against_truth_dictionary(item[0], final_truth_list, dictionary_of_truth)
         temp_array = []
         for row in item[1]:
-            temp_array.append(row)
+            temp_array.extend(row)
         final_array_of_samples.append(temp_array)
     if dictionary_of_truth:
         return final_truth_list, final_array_of_samples
