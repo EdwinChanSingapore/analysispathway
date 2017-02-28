@@ -58,6 +58,8 @@ def create_sample_dictionary(sample):
     opened_vcf_file_sample = vcf.Reader(open(sample, 'r'))
     sample_dictionary = create_dictionary_keys(opened_vcf_file_sample, {})
     for record in opened_vcf_file_sample:
+        if "GL" in record.CHROM:
+            continue
         sample_name = get_sample_name_from_record(record)
         sample_dictionary[sample_name].append(1)
     return sample_dictionary

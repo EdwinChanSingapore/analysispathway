@@ -66,22 +66,18 @@ def produce_vcf_file(calculated_prediction_actual, list_of_samples_input, vcf_di
         vcf_writer.write_record(record)
 
 
-def remove_false_negative(calculated_prediction_actual, calculated_truth_actual, list_of_samples_input):
-    removal_list_index = []
+def count_false_negative(calculated_prediction_actual, calculated_truth_actual):
+    count_false_negative = 0
     for i in range(len(calculated_prediction_actual)):
         if calculated_prediction_actual[i] == 0 and calculated_truth_actual[i] == 1:
-            removal_list_index.insert(0,i)
-    for index in removal_list_index :
-        calculated_prediction_actual.pop(index)
-        calculated_truth_actual.pop(index)
-        list_of_samples_input.pop(index)
+            count_false_negative += 1
+    return count_false_negative
 
 
 def get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
                             list_of_samples_input, vcf_list, outputpath):
     print "Here are some predictions", calculated_prediction_actual[:100]
     print "here are some truths", calculated_prediction_actual[:100]
-    remove_false_negative(calculated_prediction_actual, calculated_truth_actual, list_of_samples_input)
     f1_score_left = get_scores(calculated_prediction_actual, calculated_truth_actual, 0.0,
                                list_of_samples_input,
                                dict_of_truth_input)
@@ -99,6 +95,7 @@ def promise_vcf_file(calculated_prediction_actual, guess_f1_final, list_of_sampl
             prediction.append(1)
         else:
             prediction.append(0)
+
     list_of_records = []
     for i in range(len(list_of_samples_input)):
         if prediction[i] == 1:
@@ -132,11 +129,28 @@ def load_references(input_paths):
     with open(input_paths['input'][4], 'rb') as fp2:
         dict_of_truth_input = pickle.load(fp2)
     array_sizes = np.load(input_paths['input'][5])
-    vcf_dictionary = np.load(input_paths['input'][6])
+    with open(input_paths['input'][6], 'rb') as fp3:
+        vcf_dictionary = pickle.load(fp3)
     orig_stdout = sys.stdout
     f = file(str(input_paths['input'][3]) + '.txt', 'w')
     sys.stdout = f
     return array_sizes, dict_of_truth_input, fullmatrix_sample, fullmatrix_truth, list_of_samples_input, input_paths, vcf_dictionary
+
+
+def remove_duplicated_false_negative(prediction_list, truth_list, false_negatives):
+    count = 0
+    removal_list = []
+    for i in range(len(prediction_list)-1,-1,-1):
+        if count == false_negatives :
+            break
+        if prediction_list[i] == 0 and truth_list[i] == 1 :
+            removal_list.insert(0,i)
+            count += 1
+
+    for index in removal_list :
+        prediction_list.pop(index)
+        truth_list.pop(index)
+    return prediction_list,truth_list
 
 
 def get_scores(actual_predictions, actual_truth, value, sample_list, truth_dictionary, verbose=0):
@@ -146,9 +160,11 @@ def get_scores(actual_predictions, actual_truth, value, sample_list, truth_dicti
             prediction.append(1)
         else:
             prediction.append(0)
+    false_negatives = count_false_negative(actual_predictions,actual_truth)
     finalpredictionnumbers, finaltruthnumbers = add_negative_data(sample_list, truth_dictionary,
-                                                                  prediction,
-                                                                  actual_truth)
+                                                                  prediction, actual_truth)
+    finalpredictionnumbers, finaltruthnumbers = remove_duplicated_false_negative(finalpredictionnumbers,
+                                                                                 finaltruthnumbers, false_negatives)
     final_f1_score = f1_score(finaltruthnumbers, finalpredictionnumbers)
     if verbose:
         print_scores(actual_truth, final_f1_score, finalpredictionnumbers, finaltruthnumbers, prediction, value)
@@ -201,11 +217,9 @@ def generate_list_of_truth(dict_of_truth):
     list_of_truth = []
     for key in dict_of_truth:
         mytuple = dict_of_truth[key]
-        newtuple = ()
         for item in mytuple:
-            newtuple += tuple(item)
-        temptuple = (key[0], key[1], key[2], newtuple)
-        list_of_truth.append(temptuple)
+            temptuple = (key[0], key[1], key[2], item)
+            list_of_truth.append(temptuple)
     return list_of_truth
 
 

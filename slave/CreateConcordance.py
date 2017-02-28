@@ -61,10 +61,19 @@ def calculate_results(scikittestlist, finaltruthlist, concordnumber, output_loca
     print "final recall score is :", recall_score(finaltruthlist, scikittestlist)
     print "final F1 score is : ", f1_score(finaltruthlist, scikittestlist)
 
+def generate_list_of_truth(dict_of_truth):
+    list_of_truth = []
+    for key in dict_of_truth:
+        mytuple = dict_of_truth[key]
+        for item in mytuple:
+            temptuple = (key[0], key[1], key[2], item)
+            list_of_truth.append(temptuple)
+    return list_of_truth
 
 def fill_arrays_with_false_negatives(truthdict, sampledictionary, finaltruthlist, scikittestlist):
-    for key in truthdict:
-        check_truth_value_with_positive_called_samples(truthdict, key, sampledictionary, finaltruthlist, scikittestlist)
+    list_of_truth = generate_list_of_truth(truthdict)
+    for key in list_of_truth:
+        check_truth_value_with_positive_called_samples(key, sampledictionary, finaltruthlist, scikittestlist)
     return scikittestlist, finaltruthlist
 
 
@@ -286,11 +295,12 @@ def perf_measure(y_actual, y_hat):
     return false_positive_rate, true_negative_rate
 
 
-def check_truth_value_with_positive_called_samples(truthdict, tuplekey, dictionary_of_samples, truth_list,
+def check_truth_value_with_positive_called_samples(key, dictionary_of_samples, truth_list,
                                                    scikittestlist):
+    tuplekey = (key[0],key[1],key[2])
     if tuplekey in dictionary_of_samples:
-        for alternate in dictionary_of_samples[tuplekey]:
-            if alternate in truthdict[tuplekey]:
+        for alternate in key[3]:
+            if alternate in dictionary_of_samples[tuplekey]:
                 return
     scikittestlist.append(0)
     truth_list.append(1)
