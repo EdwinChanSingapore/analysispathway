@@ -61,21 +61,12 @@ def create_sample_dictionary(sample):
         if "GL" in record.CHROM:
             continue
         sample_name = get_sample_name_from_record(record)
-        sample_dictionary[sample_name].append(1)
+        if sample_name not in sample_dictionary :
+            sample_dictionary[sample_name] =[1]
+        else :
+            sample_dictionary[sample_name].append(1)
     return sample_dictionary
 
-
-def create_truth_dictionary(truth):
-    generated_truth_dictionary = {}
-    opened_vcf_file_truth = vcf.Reader(open(truth, 'r'))
-    for record in opened_vcf_file_truth:
-        if "GL" in record.CHROM:
-            continue
-        templist = []
-        for item in record.ALT:
-            templist.append(str(item).upper())
-        generated_truth_dictionary[(str(record.CHROM), str(record.POS), str(record.REF).upper())] = tuple(templist)
-    return generated_truth_dictionary
 
 
 def generate_sample_dictionary_compare(list_of_samples):

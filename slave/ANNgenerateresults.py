@@ -146,7 +146,6 @@ def remove_duplicated_false_negative(prediction_list, truth_list, false_negative
         if prediction_list[i] == 0 and truth_list[i] == 1 :
             removal_list.insert(0,i)
             count += 1
-
     for index in removal_list :
         prediction_list.pop(index)
         truth_list.pop(index)
@@ -154,6 +153,7 @@ def remove_duplicated_false_negative(prediction_list, truth_list, false_negative
 
 
 def get_scores(actual_predictions, actual_truth, value, sample_list, truth_dictionary, verbose=0):
+    temp_actual_truth = list(actual_truth)
     prediction = []
     for item in actual_predictions:
         if item > value:
@@ -162,7 +162,7 @@ def get_scores(actual_predictions, actual_truth, value, sample_list, truth_dicti
             prediction.append(0)
     false_negatives = count_false_negative(actual_predictions,actual_truth)
     finalpredictionnumbers, finaltruthnumbers = add_negative_data(sample_list, truth_dictionary,
-                                                                  prediction, actual_truth)
+                                                                  prediction, temp_actual_truth)
     finalpredictionnumbers, finaltruthnumbers = remove_duplicated_false_negative(finalpredictionnumbers,
                                                                                  finaltruthnumbers, false_negatives)
     final_f1_score = f1_score(finaltruthnumbers, finalpredictionnumbers)
@@ -204,13 +204,13 @@ def print_details_of_score(actual_truth, finalpredictionnumbers, finaltruthnumbe
 def add_negative_data(list_of_samples, dict_of_truth, array_of_predicted, array_of_truth):
     dict_of_samples = generate_sample_dictionary(array_of_predicted, list_of_samples)
     list_of_truth = generate_list_of_truth(dict_of_truth)
-    array_of_predicted = list(array_of_predicted)
-    array_of_truth = list(array_of_truth)
-    original_length = len(array_of_predicted)
+    new_array_of_predicted = list(array_of_predicted)
+    new_array_of_truth = list(array_of_truth)
+    original_length = len(new_array_of_predicted)
     for item in list_of_truth:
-        fillnegative(item, dict_of_samples, array_of_predicted, array_of_truth)
-    print "number of false data samples are", (len(array_of_predicted) - original_length)
-    return array_of_predicted, array_of_truth
+        fillnegative(item, dict_of_samples, new_array_of_predicted, new_array_of_truth)
+    print "number of false data samples are", (len(new_array_of_predicted) - original_length)
+    return new_array_of_predicted, new_array_of_truth
 
 
 def generate_list_of_truth(dict_of_truth):

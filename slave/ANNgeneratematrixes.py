@@ -216,15 +216,19 @@ def generate_truth_list(path):
     for truth_file in os.listdir(path):
         if "truth" not in truth_file:
             continue
-        vcf_reader = vcf.Reader(open(truth_file, 'r'))
-        for record in vcf_reader:
-            if "GL" in record.CHROM:
-                continue
-            templist = []
-            for item in record.ALT:
-                templist.append(str(item).upper())
-            generated_truth_dictionary[(str(record.CHROM), str(record.POS), str(record.REF).upper())] = tuple(templist)
+        create_truth_dictionary(generated_truth_dictionary, truth_file)
     return generated_truth_dictionary
+
+
+def create_truth_dictionary(generated_truth_dictionary, truth_file):
+    vcf_reader = vcf.Reader(open(truth_file, 'r'))
+    for record in vcf_reader:
+        if "GL" in record.CHROM:
+            continue
+        templist = []
+        for item in record.ALT:
+            templist.append(str(item).upper())
+        generated_truth_dictionary[(str(record.CHROM), str(record.POS), str(record.REF).upper())] = tuple(templist)
 
 
 def check_sample_against_truth_dictionary(tuple_name, final_truth_list, truth_dictionary):
