@@ -13,6 +13,7 @@ vcf_input_path="$inputpath/"
 model_path="$home/output/mason_version_2.1_2.8/ANN"
 model_name_path="model"
 annovarpath="/data/reference/human/annovar/"
+threshold="0.00"
 
 process predict {
 
@@ -23,7 +24,7 @@ file signal into signal1
 script:
 """
 mkdir -p $outputpath
-\${ANALYSISPATH} \${TRUEANALYSISPATH} $vcf_input_path $referencepath $outputpath $model_path $model_name_path
+\${ANALYSISPATH} \${TRUEANALYSISPATH} $vcf_input_path $referencepath $outputpath $model_path $model_name_path $threshold
 echo "done" > signal
 """
 }

@@ -2,10 +2,13 @@ import argparse
 import os
 import sys
 import time
+import unittest
+
 
 import numpy as np
 from Bio import SeqIO
 from sklearn.metrics import *
+from ANNgeneratematrixes import *
 
 from methods import *
 
@@ -65,9 +68,10 @@ def generate_list_of_truth(dict_of_truth):
     list_of_truth = []
     for key in dict_of_truth:
         mytuple = dict_of_truth[key]
+        temptuple =[]
         for item in mytuple:
-            temptuple = (key[0], key[1], key[2], item)
-            list_of_truth.append(temptuple)
+            temptuple.append(item)
+        list_of_truth.append([key[0], key[1], key[2], temptuple])
     return list_of_truth
 
 def fill_arrays_with_false_negatives(truthdict, sampledictionary, finaltruthlist, scikittestlist):
@@ -168,22 +172,6 @@ def get_sample_name_from_record(record):
         templist.append(str(item).upper())
     sample_name = (str(record.CHROM), str(record.POS), str(record.REF).upper(), tuple(templist))
     return sample_name
-
-
-def generate_truth_list(path):
-    generated_truth_dictionary = {}
-    for truth_file in os.listdir(path):
-        if "truth" not in truth_file:
-            continue
-        vcf_reader = vcf.Reader(open(truth_file, 'r'))
-        for record in vcf_reader:
-            if "GL" in record.CHROM:
-                continue
-            templist = []
-            for item in record.ALT:
-                templist.append(str(item).upper())
-            generated_truth_dictionary[(str(record.CHROM), str(record.POS), str(record.REF).upper())] = tuple(templist)
-    return generated_truth_dictionary
 
 
 def check_sample_against_truth_dictionary(tuple_name, final_sample_list, final_truth_list, truth_dictionary):
@@ -305,6 +293,9 @@ def check_truth_value_with_positive_called_samples(key, dictionary_of_samples, t
     scikittestlist.append(0)
     truth_list.append(1)
 
+class MyTest(unittest.TestCase):
+    def test(self):
+        self.assertEqual(fun(3), 4)
 
 if __name__ == "__main__":
     start_time = time.time()

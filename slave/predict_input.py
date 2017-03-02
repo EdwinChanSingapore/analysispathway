@@ -13,15 +13,19 @@ def load_reference(paths):
 def execute_main(paths):
     vcf_object = load_reference(paths)
 
-    # set scaling factor
-    scale_real_gene=0.5
-    scale_mutated_gene=1
-    scale_clinvar_gene=1
+#which gives posterior odds of
+#Prior          Likelihood  Posterior     Normalised
+#0.5            1           0.5           0.66
+#0.5            0.5         0.25          0.33
 
-    # set probabilities
-    prob_real_gene=0.9
-    prob_mutated_gene=0.5
-    prob_clinvar_gene=0.5
+    real = DiscreteDistribution({'True': probability_from_vcf, 'False': 1- probability_from_vcf })
+
+    importgene = ConditionalProbabilityTable(
+        [['True', 'True', 0.66],
+         ['True', 'False', 0.33],
+         ['False', 'True', 0.66],
+         ['False', 'False', 0.33]], [asia])
+
 
     # initialize  probability distributions
     realgene = DiscreteDistribution( { 'True': prob_real_gene * scale_real_gene, 'False': 1-(prob_real_gene * scale_real_gene) } )

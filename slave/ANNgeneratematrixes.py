@@ -58,7 +58,7 @@ def load_and_save_data(user_input):
 def main_analyse_samples_and_truth(path, referencepath):
     os.chdir(path)
     truthdict = generate_truth_list(path)
-    callerlengths, list_of_called_samples, vcf_list = generate_input(path, referencepath)
+    callerlengths, list_of_called_samples, vcf_list, threshold = generate_input(path, referencepath)
     clean_truth_array, cleaned_sample_array = check_predicted_with_truth(list_of_called_samples, truthdict)
     cleaned_sample_array = np.array(cleaned_sample_array, np.float64)
     clean_truth_array = np.array(clean_truth_array)
