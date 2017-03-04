@@ -56,5 +56,5 @@ def create_true_false_matrix(n):
         temp_list.insert(0, temp_row + ['True'])
     return temp_list
 
-
-build_cdp(2,[0.8,0.8])
+if __name__ == "__main__":
+    build_cdp(2,[0.8,0.8])
