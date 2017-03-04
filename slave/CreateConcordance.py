@@ -152,7 +152,7 @@ def get_reference_dictionary_for_entropy(reference_path):
 
 
 def ignore_file(vcf_file):
-    if "train" not in vcf_file or "breakseq" in vcf_file:
+    if "vcf" not in vcf_file or "truth" in vcf_file or "breakseq" in vcf_file:
         return True
     return False
 

@@ -2,6 +2,7 @@ import math
 from pomegranate import *
 import vcf
 import argparse
+from pgmpy.models import BayesianModel
 
 
 def load_reference(paths):
@@ -17,23 +18,35 @@ def execute_main(paths):
 #Prior          Likelihood  Posterior     Normalised
 #0.5            1           0.5           0.66
 #0.5            0.5         0.25          0.33
+    dummy_variable_1 = 0.8
+    dummy_variable_2 = 0.8
+    dummy_variable_3 = 0.8
+    dummy_variable_4 = 0.8
+    dummy_variable_5 = 0.8
+    dummy_variable_6 = 0.8
+    dummy_variable_7 = 0.8
+    dummy_variable_8 = 0.8
 
-    real = DiscreteDistribution({'True': probability_from_vcf, 'False': 1- probability_from_vcf })
+    real_gene = DiscreteDistribution({'True': 0.5, 'False': 0.5  })
+    functional_gene = DiscreteDistribution({'True': 0.5, 'False': 0.5})
+    ClinVar_gene = DiscreteDistribution({'True': 0.5, 'False': 0.5 })
+    Mut_tstr_gene = DiscreteDistribution({'True': 0.5, 'False': 0.5})
+    real_prob = dummy_variable_1
+    ClinVar_prob = dummy_variable_2
+    Mut_tstr_prob = dummy_variable_3
+    functional_prob = dummy_variable_4
 
     importgene = ConditionalProbabilityTable(
-        [['True', 'True', 0.66],
-         ['True', 'False', 0.33],
-         ['False', 'True', 0.66],
-         ['False', 'False', 0.33]], [asia])
+         [['True', 'True', 'True', p(1)*p(2)/(p1*p2 + (1-p(1))*(1-p(2)))],
+          ['True', 'True', 'False', 1-p(1)*(1-p(2))],
+          ['True', 'False', 'True', 0.66],
+          ['True', 'False', 'False', 0.33],
+          ['False', 'True', 'True', 0.66],
+          ['False', 'True', 'False', 0.33],
+          ['False', 'False', 'True', 0.66]
+          ['False', 'False', 'False', 0.33]], [real_gene, functional_gene])
 
 
-    # initialize  probability distributions
-    realgene = DiscreteDistribution( { 'True': prob_real_gene * scale_real_gene, 'False': 1-(prob_real_gene * scale_real_gene) } )
-    mutatedgene = DiscreteDistribution( { 'True': prob_mutated_gene * scale_mutated_gene, 'False': 1-(prob_mutated_gene * scale_mutated_gene) })
-    clinvargene = DiscreteDistribution( { 'True': prob_clinvar_gene * scale_clinvar_gene, 'False': 1-(prob_clinvar_gene * scale_clinvar_gene) })
-
-    # set prior belief in importance of gene (50% chance)
-    importgene = DiscreteDistribution( { 'True': 0.5, 'False': 0.5 } )
 
     # set up states
     s1 = State( realgene, name="Real Gene" )
