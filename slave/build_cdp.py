@@ -2,7 +2,6 @@
 #that the i-th X variable is true P(Xi=True).
 def build_cdp(n, prob_list):
     temp_list = create_true_false_matrix(n)
-    print "true false matrix is", temp_list
     calculate_probabilities(n, prob_list, temp_list)
     print "probabilities are", temp_list
 
@@ -24,7 +23,10 @@ def create_true_false_matrix(n):
 
 
 
-#calculates the probabilities 
+#calculates the probabilities, taking in the true list as well as a list of probabilities. The key here is
+#the probability that the mutation is true is related to the scores given by mutation taster etc..
+# ie P(X is impt | X is Clinvar) = P(X is Clinvar) 
+
 def calculate_probabilities(n, prob_list, temp_list):
     for i in range(0, 2 ** (n + 1), 2):
         true_row = temp_list[i]
@@ -33,10 +35,10 @@ def calculate_probabilities(n, prob_list, temp_list):
         for k in range(0, n, 1):
             if true_row[k] == 'True':
                 true_probability *= prob_list[k]
-                false_probability = 1 - prob_list[k]
+                false_probability *= 1 - prob_list[k] #probability that mutation is false is 1 minus mutation is true
             else:
                 true_probability *= 1 - prob_list[k]
-                false_probability = prob_list[k]
+                false_probability *= prob_list[k]
         final_true_probability = true_probability / (true_probability + false_probability)
         final_false_probability = false_probability / (true_probability + false_probability)
         temp_list[i].append(final_true_probability)
