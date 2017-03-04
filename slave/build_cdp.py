@@ -23,6 +23,7 @@ def create_true_false_matrix(n):
     return temp_list
 
 
+
 #calculates the probabilities 
 def calculate_probabilities(n, prob_list, temp_list):
     for i in range(0, 2 ** (n + 1), 2):
@@ -58,3 +59,5 @@ def create_true_false_matrix(n):
 
 if __name__ == "__main__":
     build_cdp(2,[0.8,0.8])
+    build_cdp(3, [0.8, 0.8,0.9])
+    build_cdp(4, [0.8, 0.8,0.9,0.9])
