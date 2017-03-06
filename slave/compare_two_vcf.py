@@ -5,9 +5,12 @@ def vcf_load_references(paths):
     paths = vars(paths)
     sample = paths['sample']
     truth = paths['truth']
-    orig_stdout = sys.stdout
-    f = file(paths['output'] + 'scores.txt', 'w')
-    sys.stdout = f
+    try :
+        orig_stdout = sys.stdout
+        f = file(paths['output'] + 'scores.txt', 'w')
+        sys.stdout = f
+    except :
+        print "working in normal mode"
     return sample, truth
 
 def execute_main(paths):

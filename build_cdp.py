@@ -1,9 +1,9 @@
 #builds the cdp table. n is the number of input variables, probability list gives the probability
 #that the i-th X variable is true P(Xi=True).
-def build_cdp(n, prob_list):
+def get_cdp(n, prob_list):
     temp_list = create_true_false_matrix(n)
     calculate_probabilities(n, prob_list, temp_list)
-    print "probabilities are", temp_list
+    return temp_list
 
 #Generates the True False matrix using binary counting logic
 def create_true_false_matrix(n):
@@ -25,7 +25,7 @@ def create_true_false_matrix(n):
 
 #calculates the probabilities, taking in the true list as well as a list of probabilities. The key here is
 #the probability that the mutation is true is related to the scores given by mutation taster etc..
-# ie P(X is impt | X is Clinvar) = P(X is Clinvar) 
+# ie P(X is impt | X is Clinvar) = P(X is Clinvar)
 
 def calculate_probabilities(n, prob_list, temp_list):
     for i in range(0, 2 ** (n + 1), 2):
@@ -60,6 +60,6 @@ def create_true_false_matrix(n):
     return temp_list
 
 if __name__ == "__main__":
-    build_cdp(2,[0.8,0.8])
-    build_cdp(3, [0.8, 0.8,0.9])
-    build_cdp(4, [0.8, 0.8,0.9,0.9])
+    get_cdp(2,[0.8,0.8])
+    get_cdp(3, [0.8, 0.8,0.9])
+    get_cdp(4, [0.8, 0.8,0.9,0.9])
