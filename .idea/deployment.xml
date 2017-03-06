@@ -5,7 +5,7 @@
       <paths name="bchdb.nus.edu.sg">
         <serverdata>
           <mappings>
-            <mapping deploy="/data/backup/metacaller/stage/output/pdx_version_1.0_analysis/analysis" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/data/backup/metacaller/stage/analysis/mason_version_1.0" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

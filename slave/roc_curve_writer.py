@@ -1,7 +1,7 @@
 import argparse
 import cPickle as pickle
 import sys
-
+import csv
 import numpy as np
 import vcf
 from imblearn.over_sampling import SMOTE
@@ -9,9 +9,10 @@ from keras.layers import Dense, Dropout, Activation, Merge
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.normalization import BatchNormalization
 from keras.models import Sequential
-from keras.optimizers import RMSprop
 from keras.callbacks import *
+from keras.optimizers import RMSprop
 from keras.models import load_model
+
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
 
@@ -22,6 +23,8 @@ RECURSION_LIMIT = 0.0002
 VERBOSE = 1
 
 vcf_file_name = "/ANN/truevcf.vcf"
+
+roc_file_name = "/roc.csv"
 
 keras_model_name = "/ANN/model"
 
@@ -51,21 +54,11 @@ original_vcf_reader = "/data/backup/metacaller/stage/data/version6.3a/hc.vcf.nor
 # no other file should be present in the folder
 def main_gather_input_execute_prep_output(array_sizes, dict_of_truth_input, fullmatrix_sample, fullmatrix_truth,
                                           list_of_samples_input, save_location, vcf_dictionary):
-    calculated_prediction_actual, calculated_truth_actual = train_neural_net(20, 10, fullmatrix_sample,
+    calculated_prediction_actual, calculated_truth_actual = train_neural_net(20, 20, fullmatrix_sample,
                                                                              fullmatrix_truth,
                                                                              save_location, array_sizes)
     get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
                             list_of_samples_input, vcf_dictionary, save_location)
-
-def produce_vcf_file(calculated_prediction_actual, list_of_samples_input, vcf_dictionary, outputpath):
-    list_of_records = []
-    for i in range(len(list_of_samples_input)):
-        if calculated_prediction_actual[i] == 1:
-            list_of_records.append(vcf_dictionary[i])
-    vcf_reader = vcf.Reader(filename=original_vcf_reader)
-    vcf_writer = vcf.Writer(open(outputpath + vcf_file_name, 'w'), vcf_reader)
-    for record in list_of_records:
-        vcf_writer.write_record(record)
 
 
 def count_false_negative(calculated_prediction_actual, calculated_truth_actual):
@@ -78,48 +71,24 @@ def count_false_negative(calculated_prediction_actual, calculated_truth_actual):
 
 def get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
                             list_of_samples_input, vcf_list, outputpath):
-    print "Here are some predictions", calculated_prediction_actual[:100]
-    print "here are some truths", calculated_prediction_actual[:100]
-    f1_score_left = get_scores(calculated_prediction_actual, calculated_truth_actual, 0.0,
-                               list_of_samples_input,
-                               dict_of_truth_input)
-    guess_f1_final_score, guess_f1_final = recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                                            list_of_samples_input, 0.0, f1_score_left, 0.2)
-    get_scores(calculated_prediction_actual, calculated_truth_actual, guess_f1_final, list_of_samples_input,
-               dict_of_truth_input, VERBOSE)
-    promise_vcf_file(calculated_prediction_actual, guess_f1_final, list_of_samples_input, vcf_list, outputpath)
+    list_of_x_variables = []
+    list_of_precision_scores = []
+    list_of_recall_scores = []
+    for i in np.linspace(0,1,101):
+        precision_score,recall_score,f1_score = get_scores(calculated_prediction_actual, calculated_truth_actual, i, list_of_samples_input,
+                   dict_of_truth_input, VERBOSE)
+        list_of_x_variables.append(i)
+        list_of_precision_scores.append(precision_score)
+        list_of_recall_scores.append(recall_score)
+    promise_vcf_file(list_of_x_variables, list_of_precision_scores, list_of_recall_scores, outputpath)
 
 
-def promise_vcf_file(calculated_prediction_actual, guess_f1_final, list_of_samples_input, vcf_list, outputpath):
-    prediction = []
-    for item in calculated_prediction_actual:
-        if item > guess_f1_final:
-            prediction.append(1)
-        else:
-            prediction.append(0)
-
-    list_of_records = []
-    for i in range(len(list_of_samples_input)):
-        if prediction[i] == 1:
-            list_of_records.append(vcf_list[i])
-    vcf_reader = vcf.Reader(filename=original_vcf_reader)
-    vcf_writer = vcf.Writer(open(outputpath + vcf_file_name, 'w'), vcf_reader)
-    for record in list_of_records:
-        vcf_writer.write_record(record)
-
-
-def recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                            list_of_samples_input, guess, guess_score, step):
-    if step <= RECURSION_LIMIT:
-        return guess_score, guess
-    new_guess = guess + step
-    new_guess_score = get_scores(calculated_prediction_actual, calculated_truth_actual, new_guess,
-                               list_of_samples_input, dict_of_truth_input)
-    if new_guess_score > guess_score :
-        return recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                                       list_of_samples_input, new_guess, new_guess_score, step)
-    return recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                                   list_of_samples_input, guess, guess_score, step / STEP_INCREMENT)
+def promise_vcf_file(list_of_x_variables, list_of_precision_scores, list_of_recall_scores, outputpath):
+    with open(outputpath + roc_file_name, 'wb') as csvfile:
+        spamwriter = csv.writer(csvfile, delimiter=' ',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        for i in range(len(list_of_x_variables)):
+            spamwriter.writerow([list_of_x_variables[i]]+[list_of_precision_scores[i]]+[list_of_recall_scores[i]])
 
 
 def load_references(input_paths):
@@ -170,7 +139,7 @@ def get_scores(actual_predictions, actual_truth, value, sample_list, truth_dicti
     final_f1_score = f1_score(finaltruthnumbers, finalpredictionnumbers)
     if verbose:
         print_scores(actual_truth, final_f1_score, finalpredictionnumbers, finaltruthnumbers, prediction, value)
-    return final_f1_score
+    return precision_score(finaltruthnumbers, finalpredictionnumbers), recall_score(finaltruthnumbers, finalpredictionnumbers), final_f1_score
 
 
 def print_scores(actual_truth, final_f1_score, finalpredictionnumbers, finaltruthnumbers, prediction, value):
@@ -332,28 +301,19 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     final_model.compile(loss='binary_crossentropy',
                         optimizer=rmsprop,
                         metrics=['accuracy'])
-    filepath = location + "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5"
-    checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True, mode='max')
-    callbacks_list = [checkpoint]
-    # Fit the model
-    final_model.fit([X_fb, X_hc, X_ug, X_pindel, X_st], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
-                    validation_split=0.2, verbose=2, callbacks=callbacks_list)
-
-    filepath = location + "best_weights.hdf5"
+    filepath = location + "/best_weights.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
-
-    model_history = final_model.fit([X_fb, X_hc, X_ug, X_pindel, X_st], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
-                    validation_split=0.2, verbose=2, callbacks=callbacks_list)
-    final_model.load(location + "best_weights.hdf5")
-    print model_history
+    final_model.fit([X_fb, X_hc, X_ug, X_pindel, X_st], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+                    validation_split=0.2, verbose=2, callbacks= callbacks_list)
+    final_model = load_model(location + "/best_weights.hdf5")
     scores = final_model.evaluate([X_fb_test, X_hc_test, X_ug_test, X_pindel_test, X_st_test], y_test)
     print scores
     X_fb_pred, X_hc_pred, X_ug_pred, X_pindel_pred, X_st_pred = prep_input_samples(array_sizes, myX_train)
     final_prediction_array_probabilities = final_model.predict([X_fb_pred, X_hc_pred, X_ug_pred, X_pindel_pred,
                                                                 X_st_pred])
     final_prediction_array_probabilities = np.squeeze(final_prediction_array_probabilities)
-    np.save(location + "model_loss_weights", model_history)
+
     save_model_details(final_model, final_prediction_array_probabilities, myy_train, location)
 
     return final_prediction_array_probabilities, myy_train
