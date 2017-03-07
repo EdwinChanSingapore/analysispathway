@@ -51,7 +51,7 @@ original_vcf_reader = "/data/backup/metacaller/stage/data/version6.3a/hc.vcf.nor
 # no other file should be present in the folder
 def main_gather_input_execute_prep_output(array_sizes, dict_of_truth_input, fullmatrix_sample, fullmatrix_truth,
                                           list_of_samples_input, save_location, vcf_dictionary):
-    calculated_prediction_actual, calculated_truth_actual = train_neural_net(20, 10, fullmatrix_sample,
+    calculated_prediction_actual, calculated_truth_actual = train_neural_net(20, 20, fullmatrix_sample,
                                                                              fullmatrix_truth,
                                                                              save_location, array_sizes)
     get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
@@ -325,32 +325,34 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     final_model.add(Dense(1, activation='linear'))
     final_model.add(Activation('sigmoid'))
     print (final_model.summary())
-    rmsprop = RMSprop(lr=0.00001, rho=0.9, epsilon=1e-08, decay=0.0)
+    rmsprop = RMSprop(lr=0.000001, rho=0.9, epsilon=1e-08, decay=0.0)
     final_model.compile(loss='binary_crossentropy',
                         optimizer=rmsprop,
                         metrics=['accuracy'])
-    filepath = location + "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5"
+    filepath = location + "/weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True, mode='max')
     callbacks_list = [checkpoint]
     # Fit the model
     final_model.fit([X_fb, X_hc, X_ug, X_pindel, X_st], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
                     validation_split=0.2, verbose=2, callbacks=callbacks_list)
 
-    filepath = location + "best_weights.hdf5"
+    filepath = location + "/best_weights.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
 
     model_history = final_model.fit([X_fb, X_hc, X_ug, X_pindel, X_st], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
                     validation_split=0.2, verbose=2, callbacks=callbacks_list)
-    final_model.load(location + "best_weights.hdf5")
-    print model_history
+    final_model = load_model(location + "/best_weights.hdf5")
+    print model_history.history['val_acc'], model_history.history['val_acc']
+    print model_history.history['val_loss'], model_history.history['val_loss']
+    np.save(location + "/best_weights.hdf5", model_history.history['val_acc'])
+    np.save(location + "/best_weights.hdf5", model_history.history['val_loss'])
     scores = final_model.evaluate([X_fb_test, X_hc_test, X_ug_test, X_pindel_test, X_st_test], y_test)
     print scores
     X_fb_pred, X_hc_pred, X_ug_pred, X_pindel_pred, X_st_pred = prep_input_samples(array_sizes, myX_train)
     final_prediction_array_probabilities = final_model.predict([X_fb_pred, X_hc_pred, X_ug_pred, X_pindel_pred,
                                                                 X_st_pred])
     final_prediction_array_probabilities = np.squeeze(final_prediction_array_probabilities)
-    np.save(location + "model_loss_weights", model_history)
     save_model_details(final_model, final_prediction_array_probabilities, myy_train, location)
 
     return final_prediction_array_probabilities, myy_train

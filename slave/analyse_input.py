@@ -34,6 +34,7 @@ def create_list_of_records(calculated_prediction_actual, vcf_dictionary, thresho
         raise Exception("vcf list should be same length as calculated predictions")
     for i in range(len(calculated_prediction_actual)):
         if calculated_prediction_actual[i] >= threshold:
+            vcf_dictionary[i].INFO['NN_prediction'] = calculated_prediction_actual[i][0]
             list_of_records.append(vcf_dictionary[i])
     return list_of_records
 

@@ -7,14 +7,16 @@ def vcf_load_references(paths):
     truth = paths['truth']
     try :
         orig_stdout = sys.stdout
-        f = file(paths['output'] + 'scores.txt', 'w')
+        f = file(paths['output'] + '/interesting_set_of_vcf_scores.txt', 'w')
         sys.stdout = f
+        output = paths['output']
     except :
+        output = 0
         print "working in normal mode"
-    return sample, truth
+    return sample, truth, output
 
 def execute_main(paths):
-    sample, truth = vcf_load_references(paths)
+    sample, truth, output= vcf_load_references(paths)
     truth_dictionary = {}
     create_truth_dictionary(truth_dictionary,truth)
     print "length of truth dictionary", len(truth_dictionary)
@@ -31,10 +33,10 @@ def execute_main(paths):
     in_ANN_not_in_con_list = []
     in_con_not_in_ANN_list = []
     for i in range(len(array_of_predicted)):
-        if array_of_predicted == 1 and array_of_truth == 0 :
-            in_ANN_not_in_con_list.append(final_array_of_samples[i])
-        if array_of_predicted == 0 and array_of_truth == 1 :
-            in_con_not_in_ANN_list.append(final_array_of_samples[i])
+        if array_of_predicted[i] == 1 and array_of_truth[i] == 0 :
+            in_ANN_not_in_con_list.append(sample_dictionary[final_array_of_samples[i]])
+        if array_of_predicted[i] == 0 and array_of_truth[i] == 1 :
+            in_con_not_in_ANN_list.append(sample_dictionary[final_array_of_samples[i]])
     print "in ANN but not in con list are " , in_ANN_not_in_con_list
     print "in con but not in ANN list are ", in_con_not_in_ANN_list
     print len(list_of_truth)
@@ -43,7 +45,17 @@ def execute_main(paths):
     print "final precision score is :", precision_score(array_of_truth, array_of_predicted)
     print "final recall score is :", recall_score(array_of_truth, array_of_predicted)
     print "final F1 score is : ", f1_score(array_of_truth, array_of_predicted)
-
+    if output :
+        ann_name = output + "/in_ann_not_in_con.vcf"
+        vcf_reader = vcf.Reader(filename=original_vcf_reader)
+        vcf_writer = vcf.Writer(open(ann_name, 'w'), vcf_reader)
+        for record in in_ANN_not_in_con_list:
+            vcf_writer.write_record(record)
+        con_name = output + "/in_con_not_in_ann.vcf"
+        vcf_reader = vcf.Reader(filename=original_vcf_reader)
+        vcf_writer = vcf.Writer(open(con_name, 'w'), vcf_reader)
+        for record in in_con_not_in_ANN_list:
+            vcf_writer.write_record(record)
 
 def fill_negative_samples(array_of_predicted, array_of_truth, dict_of_samples, list_of_truth, final_array_of_samples):
     for item in list_of_truth:
@@ -87,10 +99,7 @@ def create_sample_dictionary(sample):
         if "GL" in record.CHROM:
             continue
         sample_name = get_sample_name_from_record(record)
-        if sample_name not in sample_dictionary :
-            sample_dictionary[sample_name] =[1]
-        else :
-            sample_dictionary[sample_name].append(1)
+        sample_dictionary[sample_name] = record
     return sample_dictionary
 
 

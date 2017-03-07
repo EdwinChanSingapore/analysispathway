@@ -1,6 +1,6 @@
 import os
-
-from roc_curve_writer import *
+import time
+from ANNgenerateresults import *
 from methods import *
 
 ### OUTPUT GOAL :1 a dictionary of lists, where the dictionary keys are mutations, and the list contains a matrix containing information of all six callers
@@ -58,8 +58,11 @@ def load_and_save_data(user_input):
 def main_analyse_samples_and_truth(path, referencepath):
     os.chdir(path)
     truthdict = generate_truth_list(path)
+    print "truth dictionary generated at time :", time.time() - start
     callerlengths, list_of_called_samples, vcf_list = generate_input(path, referencepath)
+    print "samples generated at time :", time.time() - start
     clean_truth_array, cleaned_sample_array = check_predicted_with_truth(list_of_called_samples, truthdict)
+    print "samples checked with truth at time :", time.time() - start
     cleaned_sample_array = np.array(cleaned_sample_array, np.float64)
     clean_truth_array = np.array(clean_truth_array)
     return cleaned_sample_array, clean_truth_array, list_of_called_samples, truthdict, callerlengths, vcf_list
@@ -154,7 +157,7 @@ def iterate_over_file_to_extract_data(base_entropy, sample_dictionary, recorddic
         sample_data = getallvalues(record, recorddictionary, base_entropy, vcf_file)
         sample_dictionary[sample_name][0].append(sample_data)
         sample_dictionary[sample_name][1] = record
-        removaldict = create_removal_dict(sample_data, removaldict)
+        create_removal_dict(sample_data, removaldict)
     return removaldict
 
 
@@ -165,7 +168,6 @@ def create_removal_dict(sample_data, removaldict):
         removaldict[count] = 1
     else:
         removaldict[count] += 1
-    return removaldict
 
 
 # this method prepares
@@ -251,6 +253,7 @@ def load_references(user_input):
 
 def save_files(output_location, x_array, length_of_caller_outputs, sample_list, truth_dict, vcf_dictionary_file,
                y_array=[]):
+    pass
     file2 = output_location
     x_data_file_name = str(file2) + str(X_DATA_NAME)
     np.save(x_data_file_name, x_array)
@@ -335,4 +338,5 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--reference', help="")
     parser.add_argument('-o', '--output', help="")
     paths = parser.parse_args()
+    start = time.time()
     load_and_save_data(paths)

@@ -192,9 +192,6 @@ def generate_list_of_truth(dict_of_truth):
         for item in mytuple:
             temptuple.append(item)
         list_of_truth.append([key[0], key[1], key[2], temptuple])
-        for item in mytuple:
-            temptuple = (key[0], key[1], key[2], item)
-            list_of_truth.append(temptuple)
     return list_of_truth
 
 def generate_sample_dictionary(array_of_predicted, list_of_samples):
@@ -298,7 +295,7 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     final_model.add(Dense(1, activation='linear'))
     final_model.add(Activation('sigmoid'))
     print (final_model.summary())
-    rmsprop = RMSprop(lr=0.00001, rho=0.9, epsilon=1e-08, decay=0.0)
+    rmsprop = RMSprop(lr=0.000001, rho=0.9, epsilon=1e-08, decay=0.0)
     final_model.compile(loss='binary_crossentropy',
                         optimizer=rmsprop,
                         metrics=['accuracy'])

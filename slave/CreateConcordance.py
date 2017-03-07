@@ -72,9 +72,6 @@ def generate_list_of_truth(dict_of_truth):
         for item in mytuple:
             temptuple.append(item)
         list_of_truth.append([key[0], key[1], key[2], temptuple])
-        for item in mytuple:
-            temptuple = (key[0], key[1], key[2], item)
-            list_of_truth.append(temptuple)
     return list_of_truth
 
 def fill_arrays_with_false_negatives(truthdict, sampledictionary, finaltruthlist, scikittestlist):
