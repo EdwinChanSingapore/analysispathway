@@ -60,6 +60,6 @@ def create_true_false_matrix(n):
     return temp_list
 
 if __name__ == "__main__":
-    get_cdp(2,[0.8,0.8])
-    get_cdp(3, [0.8, 0.8,0.9])
-    get_cdp(4, [0.8, 0.8,0.9,0.9])
+    print get_cdp(2,[0.8,0.8])
+    print get_cdp(3, [0.8, 0.8,0.9])
+    print get_cdp(4, [0.8, 0.8,0.9,0.9])

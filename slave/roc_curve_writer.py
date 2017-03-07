@@ -264,6 +264,7 @@ def fillnegative(tuple1, sampledict, arrayofsamples, arrayoftruths):
     arrayoftruths.append(1)
 
 
+
 def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, array_sizes):
     fb_size, hc_size, ug_size, pindel_size, st_size = get_sizes(array_sizes)
     X_resampled, y_resampled = do_smote_resampling(myX_train, myy_train)
