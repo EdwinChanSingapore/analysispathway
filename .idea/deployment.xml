@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData">
+  <component name="PublishConfigData" serverName="bchdb.nus.edu.sg">
     <serverData>
       <paths name="bchdb.nus.edu.sg">
         <serverdata>
           <mappings>
-            <mapping deploy="/data/backup/metacaller/stage/analysis/mason_version_1.0" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/data/backup/metacaller/stage/data/pdx_version_1.0_analysis_done_vcf" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
