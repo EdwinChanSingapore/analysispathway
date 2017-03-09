@@ -14,6 +14,10 @@ from keras.callbacks import *
 from keras.models import load_model
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
+from sklearn import datasets
+from sklearn.decomposition import PCA
+
+PCA_COMPONENTS = 8
 
 STEP_INCREMENT = 10
 
@@ -293,7 +297,7 @@ def fillnegative(tuple1, sampledict, arrayofsamples, arrayoftruths):
 
 
 def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, array_sizes):
-    network_size = get_sizes(array_sizes)
+
     X_resampled, y_resampled = do_smote_resampling(myX_train, myy_train)
     X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled,
                                                         test_size=0.33, random_state=seed)
@@ -301,7 +305,8 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     nb_epoch = mynb_epoch
 
     fb_branch = Sequential()
-    develop_first_layer_matrixes(fb_branch, network_size)
+    develop_first_layer_matrixes(fb_branch, PCA_COMPONENTS)
+
 
     final_model = Sequential()
     final_model.add(Merge([fb_branch], mode='concat', concat_axis=1))
@@ -347,7 +352,9 @@ def do_smote_resampling(myX_train, myy_train):
     where_are_NaNs = np.isnan(myX_train)
     myX_train[where_are_NaNs] = 0
     X_resampled, y_resampled = sm.fit_sample(myX_train, myy_train)
-    return X_resampled, y_resampled
+    pca = PCA(n_components=PCA_COMPONENTS)
+    X_pca_resampled = pca.fit(X_resampled).transform(X_resampled)
+    return X_pca_resampled, y_resampled
 
 
 def save_model_details(final_model, save_model_probabilities, trutharray, location):
