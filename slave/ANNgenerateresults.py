@@ -293,32 +293,18 @@ def fillnegative(tuple1, sampledict, arrayofsamples, arrayoftruths):
 
 
 def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, array_sizes):
-    fb_size, hc_size, ug_size, pindel_size, st_size = get_sizes(array_sizes)
+    network_size = get_sizes(array_sizes)
     X_resampled, y_resampled = do_smote_resampling(myX_train, myy_train)
     X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled,
                                                         test_size=0.33, random_state=seed)
-    X_fb, X_hc, X_ug, X_pindel, X_st = prep_input_samples(array_sizes, X_train)
-    X_fb_test, X_hc_test, X_ug_test, X_pindel_test, X_st_test = prep_input_samples(array_sizes, X_test)
     batch_size = mybatch_size
     nb_epoch = mynb_epoch
 
     fb_branch = Sequential()
-    develop_first_layer_matrixes(fb_branch, fb_size)
-
-    hc_branch = Sequential()
-    develop_first_layer_matrixes(hc_branch, hc_size)
-
-    ug_branch = Sequential()
-    develop_first_layer_matrixes(ug_branch, ug_size)
-
-    pindel_branch = Sequential()
-    develop_first_layer_matrixes(pindel_branch, pindel_size)
-
-    st_branch = Sequential()
-    develop_first_layer_matrixes(st_branch, st_size)
+    develop_first_layer_matrixes(fb_branch, network_size)
 
     final_model = Sequential()
-    final_model.add(Merge([fb_branch, hc_branch, ug_branch, pindel_branch, st_branch], mode='concat', concat_axis=1))
+    final_model.add(Merge([fb_branch], mode='concat', concat_axis=1))
     final_model.add(LeakyReLU(alpha=0.05))
     final_model.add(Dense(24, activation='linear'))
     final_model.add(LeakyReLU(alpha=0.05))
@@ -333,25 +319,23 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True, mode='max')
     callbacks_list = [checkpoint]
     # Fit the model
-    final_model.fit([X_fb, X_hc, X_ug, X_pindel, X_st], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+    final_model.fit([X_train], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
                     validation_split=0.2, verbose=2, callbacks=callbacks_list)
 
     filepath = location + "/best_weights.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
 
-    model_history = final_model.fit([X_fb, X_hc, X_ug, X_pindel, X_st], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+    model_history = final_model.fit([X_train], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
                     validation_split=0.2, verbose=2, callbacks=callbacks_list)
     final_model = load_model(location + "/best_weights.hdf5")
     print model_history.history['val_acc'], model_history.history['val_acc']
     print model_history.history['val_loss'], model_history.history['val_loss']
     np.save(location + "/best_weights.hdf5", model_history.history['val_acc'])
     np.save(location + "/best_weights.hdf5", model_history.history['val_loss'])
-    scores = final_model.evaluate([X_fb_test, X_hc_test, X_ug_test, X_pindel_test, X_st_test], y_test)
+    scores = final_model.evaluate([X_test], y_test)
     print scores
-    X_fb_pred, X_hc_pred, X_ug_pred, X_pindel_pred, X_st_pred = prep_input_samples(array_sizes, myX_train)
-    final_prediction_array_probabilities = final_model.predict([X_fb_pred, X_hc_pred, X_ug_pred, X_pindel_pred,
-                                                                X_st_pred])
+    final_prediction_array_probabilities = final_model.predict([X_resampled])
     final_prediction_array_probabilities = np.squeeze(final_prediction_array_probabilities)
     save_model_details(final_model, final_prediction_array_probabilities, myy_train, location)
 
@@ -395,7 +379,7 @@ def get_sizes(array_sizes):
     ug_size = array_sizes[2]
     pindel_size = array_sizes[3]
     st_size = array_sizes[4]
-    return fb_size, hc_size, ug_size, pindel_size, st_size
+    return fb_size + hc_size + ug_size + pindel_size + st_size
 
 
 def prep_input_samples(array_sizes, x_training_data):
