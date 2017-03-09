@@ -38,7 +38,7 @@ file signal into signal2
 
 script:
 """
-\${ANNOTATEPATH} $vcf_input_path $outputpath $annovarpath
+\${ANNOTATEPATH} $vcf_input_path $outputpath/truevcf.vcf $annovarpath/
 """
 }
 

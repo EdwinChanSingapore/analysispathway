@@ -32,11 +32,21 @@ def execute_main(paths):
     fill_negative_samples(array_of_predicted, array_of_truth, dict_of_samples, list_of_truth, final_array_of_samples)
     in_ANN_not_in_con_list = []
     in_con_not_in_ANN_list = []
+    new_truth_dictionary = create_sample_dictionary(truth)
+    sample_dictionary.update(new_truth_dictionary)
     for i in range(len(array_of_predicted)):
         if array_of_predicted[i] == 1 and array_of_truth[i] == 0 :
-            in_ANN_not_in_con_list.append(sample_dictionary[final_array_of_samples[i]])
+            if type(final_array_of_samples[i][3]) == list:
+                final_array_of_samples[i] = list(final_array_of_samples[i])
+                final_array_of_samples[i][3] = tuple(final_array_of_samples[i][3])
+                final_array_of_samples[i] = tuple(final_array_of_samples[i])
+            in_ANN_not_in_con_list.append(sample_dictionary[tuple(final_array_of_samples[i])])
         if array_of_predicted[i] == 0 and array_of_truth[i] == 1 :
-            in_con_not_in_ANN_list.append(sample_dictionary[final_array_of_samples[i]])
+            if type(final_array_of_samples[i][3]) == list:
+                final_array_of_samples[i] = list(final_array_of_samples[i])
+                final_array_of_samples[i][3] = tuple(final_array_of_samples[i][3])
+                final_array_of_samples[i] = tuple(final_array_of_samples[i])
+            in_con_not_in_ANN_list.append(sample_dictionary[tuple(final_array_of_samples[i])])
     print "in ANN but not in con list are " , in_ANN_not_in_con_list
     print "in con but not in ANN list are ", in_con_not_in_ANN_list
     print len(list_of_truth)
@@ -93,8 +103,8 @@ def match_created_with_truth(generated_truth_dictionary, sample_dictionary):
 
 
 def create_sample_dictionary(sample):
+    sample_dictionary = {}
     opened_vcf_file_sample = vcf.Reader(open(sample, 'r'))
-    sample_dictionary = create_dictionary_keys(opened_vcf_file_sample, {})
     for record in opened_vcf_file_sample:
         if "GL" in record.CHROM:
             continue
