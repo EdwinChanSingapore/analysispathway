@@ -2,7 +2,7 @@
 
 home = '/data/backup/metacaller/stage'
 project ='mason_cut1.0'
-projectout ='mason1.0'
+projectout ='mason_cut1.0'
 inpath ="$home/data/$project"
 inputpath="$inpath"
 outpath ="$home/output/$projectout"
