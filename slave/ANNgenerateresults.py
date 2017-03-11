@@ -296,7 +296,7 @@ def fillnegative(tuple1, sampledict, arrayofsamples, arrayoftruths):
     arrayoftruths.append(1)
 
 
-def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, array_sizes):
+def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location):
 
     X_resampled, y_resampled = do_smote_resampling(myX_train, myy_train)
     X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled,
@@ -304,14 +304,19 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     batch_size = mybatch_size
     nb_epoch = mynb_epoch
 
-    fb_branch = Sequential()
-    develop_first_layer_matrixes(fb_branch, PCA_COMPONENTS)
-
-
     final_model = Sequential()
-    final_model.add(Merge([fb_branch], mode='concat', concat_axis=1))
+    final_model.add(BatchNormalization(input_shape=(PCA_COMPONENTS,), axis=1))
+    final_model.add(Dense(24, activation='linear'))
     final_model.add(LeakyReLU(alpha=0.05))
     final_model.add(Dense(24, activation='linear'))
+    final_model.add(LeakyReLU(alpha=0.05))
+    final_model.add(Dropout(0.2))
+    final_model.add(Dense(24, activation='linear'))
+    final_model.add(LeakyReLU(alpha=0.05))
+    final_model.add(Dropout(0.2))
+    final_model.add(Dense(24, activation='linear'))
+    final_model.add(LeakyReLU(alpha=0.05))
+    final_model.add(Dense(6, activation='linear'))
     final_model.add(LeakyReLU(alpha=0.05))
     final_model.add(Dense(1, activation='linear'))
     final_model.add(Activation('sigmoid'))
@@ -324,7 +329,6 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     filepath = location + "/best_weights.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
-
     model_history = final_model.fit([X_train], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
                     validation_split=0.2, verbose=2, callbacks=callbacks_list)
     final_model = load_model(location + "/best_weights.hdf5")
@@ -358,20 +362,6 @@ def save_model_details(final_model, save_model_probabilities, trutharray, locati
     np.save(name1, save_model_probabilities)
     np.save(name2, trutharray)
     final_model.save(name3)
-
-
-def develop_first_layer_matrixes(neural_net_branch, branch_size):
-    neural_net_branch.add(BatchNormalization(input_shape=(branch_size,), axis=1))
-    neural_net_branch.add(Dense(24, activation='linear'))
-    neural_net_branch.add(LeakyReLU(alpha=0.05))
-    neural_net_branch.add(Dense(24, activation='linear'))
-    neural_net_branch.add(LeakyReLU(alpha=0.05))
-    neural_net_branch.add(Dropout(0.2))
-    neural_net_branch.add(Dense(24, activation='linear'))
-    neural_net_branch.add(LeakyReLU(alpha=0.05))
-    neural_net_branch.add(Dropout(0.2))
-    neural_net_branch.add(Dense(6, activation='linear'))
-    neural_net_branch.add(LeakyReLU(alpha=0.05))
 
 
 def get_sizes(array_sizes):
