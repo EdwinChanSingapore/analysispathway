@@ -330,7 +330,7 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     filepath = location + "/best_weights.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
-    model_history = final_model.fit([X_train], myy_train, batch_size=batch_size, nb_epoch=nb_epoch,
+    model_history = final_model.fit([X_train], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
                                     validation_split=0.2, verbose=2, callbacks=callbacks_list)
     final_model = load_model(location + "/best_weights.hdf5")
     print model_history.history['val_acc'], model_history.history['val_acc']
