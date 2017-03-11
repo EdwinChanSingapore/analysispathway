@@ -5,17 +5,15 @@ import sys
 import numpy as np
 import vcf
 from imblearn.over_sampling import SMOTE
-from keras.layers import Dense, Dropout, Activation, Merge
+from keras.callbacks import *
+from keras.layers import Dense, Dropout, Activation
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.normalization import BatchNormalization
 from keras.models import Sequential
-from keras.optimizers import RMSprop
-from keras.callbacks import *
 from keras.models import load_model
+from keras.optimizers import RMSprop
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
-from sklearn import datasets
-from sklearn.decomposition import PCA
 
 PCA_COMPONENTS = 8
 
@@ -61,6 +59,7 @@ def main_gather_input_execute_prep_output(array_sizes, dict_of_truth_input, full
     get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
                             list_of_samples_input, vcf_dictionary, save_location)
 
+
 def produce_vcf_file(calculated_prediction_actual, list_of_samples_input, vcf_dictionary, outputpath):
     list_of_records = []
     for i in range(len(list_of_samples_input)):
@@ -87,8 +86,9 @@ def get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actua
     f1_score_left = get_scores(calculated_prediction_actual, calculated_truth_actual, 0.0,
                                list_of_samples_input,
                                dict_of_truth_input)
-    guess_f1_final_score, guess_f1_final = recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
-                                            list_of_samples_input, 0.0, f1_score_left, 0.2)
+    guess_f1_final_score, guess_f1_final = recursive_best_f1_score(calculated_prediction_actual,
+                                                                   calculated_truth_actual, dict_of_truth_input,
+                                                                   list_of_samples_input, 0.0, f1_score_left, 0.2)
     get_scores(calculated_prediction_actual, calculated_truth_actual, guess_f1_final, list_of_samples_input,
                dict_of_truth_input, VERBOSE)
     promise_vcf_file(calculated_prediction_actual, guess_f1_final, list_of_samples_input, vcf_list, outputpath)
@@ -118,8 +118,8 @@ def recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actua
         return guess_score, guess
     new_guess = guess + step
     new_guess_score = get_scores(calculated_prediction_actual, calculated_truth_actual, new_guess,
-                               list_of_samples_input, dict_of_truth_input)
-    if new_guess_score > guess_score :
+                                 list_of_samples_input, dict_of_truth_input)
+    if new_guess_score > guess_score:
         return recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
                                        list_of_samples_input, new_guess, new_guess_score, step)
     return recursive_best_f1_score(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
@@ -146,16 +146,16 @@ def load_references(input_paths):
 def remove_duplicated_false_negative(prediction_list, truth_list, false_negatives):
     count = 0
     removal_list = []
-    for i in range(len(prediction_list)-1,-1,-1):
-        if count == false_negatives :
+    for i in range(len(prediction_list) - 1, -1, -1):
+        if count == false_negatives:
             break
-        if prediction_list[i] == 0 and truth_list[i] == 1 :
-            removal_list.insert(0,i)
+        if prediction_list[i] == 0 and truth_list[i] == 1:
+            removal_list.insert(0, i)
             count += 1
-    for index in removal_list :
+    for index in removal_list:
         prediction_list.pop(index)
         truth_list.pop(index)
-    return prediction_list,truth_list
+    return prediction_list, truth_list
 
 
 def get_scores(actual_predictions, actual_truth, value, sample_list, truth_dictionary, verbose=0):
@@ -166,7 +166,7 @@ def get_scores(actual_predictions, actual_truth, value, sample_list, truth_dicti
             prediction.append(1)
         else:
             prediction.append(0)
-    false_negatives = count_false_negative(actual_predictions,actual_truth)
+    false_negatives = count_false_negative(actual_predictions, actual_truth)
     finalpredictionnumbers, finaltruthnumbers = add_negative_data(sample_list, truth_dictionary,
                                                                   prediction, temp_actual_truth)
     finalpredictionnumbers, finaltruthnumbers = remove_duplicated_false_negative(finalpredictionnumbers,
@@ -223,11 +223,12 @@ def generate_list_of_truth(dict_of_truth):
     list_of_truth = []
     for key in dict_of_truth:
         mytuple = dict_of_truth[key]
-        temptuple =[]
+        temptuple = []
         for item in mytuple:
             temptuple.append(item)
         list_of_truth.append([key[0], key[1], key[2], temptuple])
     return list_of_truth
+
 
 def generate_sample_dictionary(array_of_predicted, list_of_samples):
     dict_of_samples = {}
@@ -296,8 +297,8 @@ def fillnegative(tuple1, sampledict, arrayofsamples, arrayoftruths):
     arrayoftruths.append(1)
 
 
-def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location):
-
+def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, arraysize):
+    number = int(reduce(lambda x, y: x + y, arraysize))
     X_resampled, y_resampled = do_smote_resampling(myX_train, myy_train)
     X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled,
                                                         test_size=0.2, random_state=seed)
@@ -305,7 +306,7 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location):
     nb_epoch = mynb_epoch
 
     final_model = Sequential()
-    final_model.add(BatchNormalization(input_shape=(PCA_COMPONENTS,), axis=1))
+    final_model.add(BatchNormalization(input_shape=(number,), axis=1))
     final_model.add(Dense(24, activation='linear'))
     final_model.add(LeakyReLU(alpha=0.05))
     final_model.add(Dense(24, activation='linear'))
@@ -329,8 +330,8 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location):
     filepath = location + "/best_weights.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
-    model_history = final_model.fit([X_train], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
-                    validation_split=0.2, verbose=2, callbacks=callbacks_list)
+    model_history = final_model.fit([myX_train], myy_train, batch_size=batch_size, nb_epoch=nb_epoch,
+                                    validation_split=0.2, verbose=2, callbacks=callbacks_list)
     final_model = load_model(location + "/best_weights.hdf5")
     print model_history.history['val_acc'], model_history.history['val_acc']
     print model_history.history['val_loss'], model_history.history['val_loss']
@@ -350,9 +351,7 @@ def do_smote_resampling(myX_train, myy_train):
     where_are_NaNs = np.isnan(myX_train)
     myX_train[where_are_NaNs] = 0
     X_resampled, y_resampled = sm.fit_sample(myX_train, myy_train)
-    pca = PCA(n_components=PCA_COMPONENTS)
-    X_pca_resampled = pca.fit(X_resampled).transform(X_resampled)
-    return X_pca_resampled, y_resampled
+    return X_resampled, y_resampled
 
 
 def save_model_details(final_model, save_model_probabilities, trutharray, location):
