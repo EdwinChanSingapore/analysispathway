@@ -1,8 +1,8 @@
 #!/usr/bin/env nextflow
 
 home = '/data/backup/metacaller/stage'
-project ='mason_cut1.0'
-projectout ='mason_cut1.0'
+project ='mason_version_3.0'
+projectout ='mason_version_3.00_freeze_normal'
 inpath ="$home/data/$project"
 inputpath="$inpath"
 outpath ="$home/output/$projectout"
@@ -15,7 +15,7 @@ process movefiles {
 input:
 
 output :
-file signal into startlearning0,startlearning1,startlearning2,startlearning3,startlearning4,startlearning5,startlearning6
+file signal into startlearning0,startlearning1,startlearning2,startlearning3,startlearning4,startlearning5,startlearning6,startlearning7
 
 script:
 """
@@ -36,12 +36,12 @@ output:
 
 script:
 """
-#mkdir -p $outputpath/ANN/
+mkdir -p $outputpath/ANN/
 #chmod 777 $outputpath/ANN/
 #rm -f $outputpath/ANN/model*
-\${ANNPATH} \${TRUEANNPATH} $inputpath $referencepath $outputpath
+\${ANNPATH} \${TRUEANNPATH} $inputpath $ucscreferencepath $outputpath
 #cp -f ${GENERATEANNPATH} $outputpath/ANN/
-#\${CALPATH} $outputpath/ANN/ANNgenerateresults.py $outputpath/ANN/myXdata.txt.npy $outputpath/ANN/myydata.txt.npy $outputpath/ANN/ $outputpath/ANN/samplelist.p $outputpath/ANN/truthdict.p $outputpath/ANN/callerlengths.txt.npy $outputpath/ANN/vcf_list.txt
+#\${CALPATH} $outputpath/ANN/ANNgenerateresults.py $outputpath/ANN/myXdata.txt.npy $outputpath/ANN/myydata.txt.npy $outputpath/ANN/ $outputpath/ANN/samplelist.p $outputpath/ANN/truthdict.p $outputpath/ANN/callerlengths.txt.npy $outputpath/ANN/vcf_list.p
 """
 
 }
@@ -56,82 +56,17 @@ output:
 script:
 """
 mkdir -p $outputpath/concordance/1/
-\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 1
-"""
-
-}
-
-process concord2 {
-
-input:
-file signal from startlearning2
-
-output:
-
-script:
-"""
+#\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 1
 mkdir -p $outputpath/concordance/2/
-\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 2
-"""
-
-}
-
-process concord3 {
-
-input:
-file signal from startlearning3
-
-output:
-
-script:
-"""
+#\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 2
 mkdir -p $outputpath/concordance/3/
-\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 3
-"""
-
-}
-
-process concord4 {
-
-input:
-file signal from startlearning4
-
-output:
-
-script:
-"""
+#\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 3
 mkdir -p $outputpath/concordance/4/
-\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 4
-"""
-
-}
-
-process concord5 {
-
-input:
-file signal from startlearning5
-
-output:
-
-script:
-"""
+#\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 4
 mkdir -p $outputpath/concordance/5/
-\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 5
-"""
-
-}
-
-process concord6 {
-
-input:
-file signal from startlearning6
-
-output:
-
-script:
-"""
+#\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 5
 mkdir -p $outputpath/concordance/6/
-\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 6
+#\${CONCORDANCEPATH} \${TRUECONCORDANCEPATH} $inputpath $outputpath 6
 """
 
 }
