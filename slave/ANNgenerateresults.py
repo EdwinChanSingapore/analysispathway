@@ -55,7 +55,7 @@ original_vcf_reader = "/data/backup/metacaller/stage/data/version6.3a/hc.vcf.nor
 # no other file should be present in the folder
 def main_gather_input_execute_prep_output(array_sizes, dict_of_truth_input, fullmatrix_sample, fullmatrix_truth,
                                           list_of_samples_input, save_location, vcf_dictionary):
-    calculated_prediction_actual, calculated_truth_actual = train_neural_net(20, 20, fullmatrix_sample,
+    calculated_prediction_actual, calculated_truth_actual = train_neural_net(20, 10, fullmatrix_sample,
                                                                              fullmatrix_truth,
                                                                              save_location, array_sizes)
     get_all_relevant_scores(calculated_prediction_actual, calculated_truth_actual, dict_of_truth_input,
@@ -300,7 +300,7 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
 
     X_resampled, y_resampled = do_smote_resampling(myX_train, myy_train)
     X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled,
-                                                        test_size=0.33, random_state=seed)
+                                                        test_size=0.2, random_state=seed)
     batch_size = mybatch_size
     nb_epoch = mynb_epoch
 
@@ -316,16 +316,10 @@ def train_neural_net(mybatch_size, mynb_epoch, myX_train, myy_train, location, a
     final_model.add(Dense(1, activation='linear'))
     final_model.add(Activation('sigmoid'))
     print (final_model.summary())
-    rmsprop = RMSprop(lr=0.000001, rho=0.9, epsilon=1e-08, decay=0.0)
+    rmsprop = RMSprop(lr=0.000003, rho=0.9, epsilon=1e-08, decay=0.0)
     final_model.compile(loss='binary_crossentropy',
                         optimizer=rmsprop,
                         metrics=['accuracy'])
-    filepath = location + "/weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5"
-    checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True, mode='max')
-    callbacks_list = [checkpoint]
-    # Fit the model
-    final_model.fit([X_train], y_train, batch_size=batch_size, nb_epoch=nb_epoch,
-                    validation_split=0.2, verbose=2, callbacks=callbacks_list)
 
     filepath = location + "/best_weights.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
